@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=66", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flask-stream"
+version = "1.0.0"
+description = "Flask extension for remote downloads and progress streaming"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Pera Andreu", email = "perapublica@gmail.com"}
+]
+urls = { "Homepage" = "https://github.com/P3r4nD/flask-stream" }
+classifiers = [
+    "Framework :: Flask",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "Flask>=3.1.3",
+    "paramiko>=4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "black",
+    "isort"
+]

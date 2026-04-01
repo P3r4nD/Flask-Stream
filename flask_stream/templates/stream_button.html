@@ -1,0 +1,11 @@
+<button id="stream-btn" class="btn btn-primary">
+Descargar logs
+</button>
+<div id="stream-log"></div>
+<div id="stream-container" class="mt-4"></div>
+
+<script>
+window.STREAM_CONFIG = {{ stream_config | tojson }};
+</script>
+
+<script src="{{ url_for('stream.static', filename='stream.js') }}"></script>
