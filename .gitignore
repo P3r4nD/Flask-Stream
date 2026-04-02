@@ -7,3 +7,4 @@ downloads/
 .env
 .venv/
 dist/
+flask_stream.egg-info/

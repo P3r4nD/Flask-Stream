@@ -19,6 +19,9 @@ jobs:
       - name: Clean dist
         run: rm -rf dist
 
+      - name: Clean build artifacts
+        run: rm -rf dist build *.egg-info flask_stream.egg-info
+
       - name: Build package
         run: |
           pip install build
