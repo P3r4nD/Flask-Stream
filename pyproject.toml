@@ -33,6 +33,7 @@ dev = [
 ]
 
 [tool.setuptools]
+packages = ["flask_stream"]
 include-package-data = true
 
 [tool.setuptools.package-data]
