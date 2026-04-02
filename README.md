@@ -1,6 +1,6 @@
 # Flask-Stream
 
-[![PyPI](https://img.shields.io/pypi/v/flask-stream?cache_bust=1)](https://pypi.org/project/flask-stream/)
+[![PyPI](https://img.shields.io/pypi/v/flask-stream?cache_bust=1&cacheSeconds=20)](https://pypi.org/project/flask-stream/)
 [![Python Version](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![CI](https://github.com/P3r4nD/flask-stream/actions/workflows/python-publish.yml/badge.svg?branch=main)
