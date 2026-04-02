@@ -75,8 +75,16 @@ cd flask-stream
 # Install with dev dependencies
 pip install -e .[dev]
 
+# Or from PyPI
+pip install flask-stream
+```
+
+
+
 ## Basic usage
+
 ```python
+
 from flask import Flask
 from flask_stream import Stream
 
