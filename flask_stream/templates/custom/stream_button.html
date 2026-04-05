@@ -1,0 +1,14 @@
+<button id="stream-btn" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-500 transition">
+    {{ stream_i18n.download_logs }}
+</button>
+
+<div id="stream-log" class="mt-2 text-sm text-gray-300"></div>
+<div id="stream-container" class="mt-4"></div>
+
+<script>
+window.STREAM_CONFIG = {{ stream_config | tojson }};
+window.STREAM_I18N = {{ stream_i18n | tojson }};
+</script>
+
+<script src="{{ url_for('stream.static', filename='ui/custom.js') }}"></script>
+<script src="{{ url_for('stream.static', filename='stream.js') }}"></script>
