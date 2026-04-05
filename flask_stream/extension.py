@@ -3,6 +3,7 @@ from markupsafe import Markup
 from .config import DefaultConfig
 from .manager import StreamManager
 from .blueprint import bp
+from .i18n import load_translations
 
 class Stream:
 
@@ -21,6 +22,9 @@ class Stream:
 
         app.extensions["stream"] = self
 
+        lang = app.config.get("STREAM_LANG", "en")
+        translations = load_translations(lang)
+
         app.register_blueprint(bp)
 
         app.context_processor(lambda: {
@@ -29,7 +33,8 @@ class Stream:
                 "bulk": app.config["STREAM_BULK_DOWNLOAD"],
                 "max_simultaneous": app.config["STREAM_MAX_SIMULTANEOUS"],
                 "max_reconnect": app.config["STREAM_MAX_RECONNECT_ATTEMPTS"]
-            }
+            },
+            "stream_i18n": translations
         })
 
     def button(self):

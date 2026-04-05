@@ -5,7 +5,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const CONFIG = window.STREAM_CONFIG;
 
+    const i18n = window.STREAM_I18N || {}
+
     const serversUI = {};
+
+    function t(key) {
+        return i18n[key] || key
+    }
 
     function createServerBlock(server) {
         const block = document.createElement("div");
@@ -79,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (log.children.length >= CONFIG.max_reconnect) {
             log.replaceChildren();
-            pushLog(log, `<span class="text-danger">Server or App disconnected</span>`);
+            pushLog(log, `<span class="text-danger">${t("server_disconnected")}</span>`);
             log.scrollTop = log.scrollHeight;
             es?.close?.();
             return;
@@ -157,7 +163,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const totalMB = (data.size / 1024 / 1024).toFixed(1);
 
-            slot.name.innerText = `${data.file} (Downloaded 0 MB de ${totalMB} MB)`;
+            slot.name.innerText = `${data.file} (${t("downloaded")} 0 MB ${t("of")} ${totalMB} MB)`;
 
             slot.bar.style.width = "0%";
             slot.bar.innerText = "0%";
@@ -187,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const totalMB = (slot.size / 1024 / 1024).toFixed(1);
 
                 slot.name.innerText =
-                    `${data.file} (Downloaded ${downloadedMB} MB de ${totalMB} MB)`;
+                    `${data.file} (${t("downloaded")} ${downloadedMB} MB ${t("of")} ${totalMB} MB)`;
             }
         });
 
@@ -249,9 +255,9 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log("SSE connection lost")
 
             if (es.readyState === EventSource.CLOSED) {
-                addLogMessage(`<span class="text-danger">Server or App disconnected</span>`, es);
+                addLogMessage(`<span class="text-danger">${t("server_disconnected")}</span>`, es);
             } else {
-                addLogMessage(`<span class="text-warning">Connection interrupted, attempting to reconnect...</span>`, es);
+                addLogMessage(`<span class="text-warning">${t("conn_interrupted")}</span>`, es);
             }
         };
 

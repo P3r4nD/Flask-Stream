@@ -13,3 +13,5 @@ class DefaultConfig:
 
     STREAM_SERVERS = []
     STREAM_MAX_SERVERS = 2
+
+    STREAM_LANG = "en"

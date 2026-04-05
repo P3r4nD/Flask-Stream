@@ -1,0 +1,13 @@
+{
+  "download_logs": "Descargar logs",
+  "downloading": "Descargando",
+  "downloaded": "Descargados",
+  "completed": "Completado",
+  "conn_interrupted": "Conexión interrumpida, intentando reconectar...",
+  "server_disconnected": "Servidor o aplicación desconectado",
+  "files_found": "archivos encontrados",
+  "file": "Archivo",
+  "progress": "Progreso",
+  "total_progress": "Progreso total",
+  "of": "de"
+}

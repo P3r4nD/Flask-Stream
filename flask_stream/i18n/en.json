@@ -1,0 +1,13 @@
+{
+  "download_logs": "Download logs",
+  "downloading": "Downloading",
+  "downloaded": "Downloaded",
+  "completed": "Completed",
+  "conn_interrupted": "Connection interrupted, attempting to reconnect...",
+  "server_disconnected": "Server or App disconnected",
+  "files_found": "files found",
+  "file": "File",
+  "progress": "Progress",
+  "total_progress": "Total progress",
+  "of": "of"
+}
