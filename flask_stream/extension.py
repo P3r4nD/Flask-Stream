@@ -27,7 +27,8 @@ class Stream:
             "stream_button": self.button,
             "stream_config": {
                 "bulk": app.config["STREAM_BULK_DOWNLOAD"],
-                "max_simultaneous": app.config["STREAM_MAX_SIMULTANEOUS"]
+                "max_simultaneous": app.config["STREAM_MAX_SIMULTANEOUS"],
+                "max_reconnect": app.config["STREAM_MAX_RECONNECT_ATTEMPTS"]
             }
         })
 

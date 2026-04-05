@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const serversUI = {};
 
     function createServerBlock(server) {
-
         const block = document.createElement("div");
         block.className = "card mb-4";
 
@@ -32,38 +31,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         container.appendChild(block);
 
-        const bars = block.querySelector(".file-bars");
-
-        // create bars according to configuration
-        const fileBars = [];
-
-        const barCount = CONFIG.bulk ? CONFIG.max_simultaneous : 1;
-
-        for (let i = 0; i < barCount; i++) {
-
-            const wrapper = document.createElement("div");
-
-            wrapper.innerHTML = `
-                <div class="small file-name"></div>
-                <div class="progress mb-2">
-                    <div class="progress-bar bg-primary" style="width:0%">0%</div>
-                </div>
-            `;
-
-            bars.appendChild(wrapper);
-
-            fileBars.push({
-                wrapper,
-                name: wrapper.querySelector(".file-name"),
-                bar: wrapper.querySelector(".progress-bar"),
-                file: null,
-                size: 0
-            });
-        }
-
         serversUI[server] = {
             block,
-            bars: fileBars,
+            bars: [],   // ← vacío al inicio
             totalBar: block.querySelector(".total-bar"),
             log: block.querySelector(".server-log"),
             counter: block.querySelector(".file-counter"),
@@ -71,6 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
             completedFiles: 0
         };
     }
+
 
     function assignBar(serverUI, file) {
 
@@ -97,6 +68,29 @@ document.addEventListener("DOMContentLoaded", () => {
         return serverUI.bars.find(b => b.file === file);
     }
 
+    function pushLog(log, html) {
+        const div = document.createElement("div");
+        div.innerHTML = html;
+        log.appendChild(div);
+    }
+
+    function addLogMessage(html, es) {
+        const log = document.getElementById("stream-log");
+
+        if (log.children.length >= CONFIG.max_reconnect) {
+            log.replaceChildren();
+            pushLog(log, `<span class="text-danger">Server or App disconnected</span>`);
+            log.scrollTop = log.scrollHeight;
+            es?.close?.();
+            return;
+        }
+
+        pushLog(log, html);
+        log.scrollTop = log.scrollHeight;
+    }
+
+
+
     btn.onclick = async () => {
 
         container.innerHTML = "";
@@ -110,14 +104,39 @@ document.addEventListener("DOMContentLoaded", () => {
         const log = document.getElementById("stream-log");
 
         es.addEventListener("Batch", e => {
-
             const data = JSON.parse(e.data);
             const server = data.server;
 
             if (!serversUI[server]) createServerBlock(server);
 
-            serversUI[server].totalFiles = data.total;
+            const serverUI = serversUI[server];
+            serverUI.totalFiles = data.total;
 
+            if (serverUI.bars.length > 0) return;
+
+            const barsContainer = serverUI.block.querySelector(".file-bars");
+
+            const barCount = (data.total === 1) ? 1 :
+                            (CONFIG.bulk ? CONFIG.max_simultaneous : 1);
+
+            for (let i = 0; i < barCount; i++) {
+                const wrapper = document.createElement("div");
+                wrapper.innerHTML = `
+                    <div class="small file-name"></div>
+                    <div class="progress mb-2">
+                        <div class="progress-bar bg-primary" style="width:0%">0%</div>
+                    </div>
+                `;
+                barsContainer.appendChild(wrapper);
+
+                serverUI.bars.push({
+                    wrapper,
+                    name: wrapper.querySelector(".file-name"),
+                    bar: wrapper.querySelector(".progress-bar"),
+                    file: null,
+                    size: 0
+                });
+            }
         });
 
         es.addEventListener("File", e => {
@@ -227,12 +246,10 @@ document.addEventListener("DOMContentLoaded", () => {
         // Connection error capture
         es.onerror = (e) => {
             if (es.readyState === EventSource.CLOSED) {
-                // Stream permanently closed
-                log.innerHTML += `<div class="text-danger">Server or App disconnected</div>`;
+                addLogMessage(`<span class="text-danger">Server or App disconnected</span>`, es);
             } else {
-                log.innerHTML += `<div class="text-warning">Connection interrupted, attempting to reconnect...</div>`;
+                addLogMessage(`<span class="text-warning">Connection interrupted, attempting to reconnect...</span>`, es);
             }
-            log.scrollTop = log.scrollHeight;
         };
     };
 
