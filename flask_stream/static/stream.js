@@ -2,6 +2,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const btn = document.getElementById("stream-btn");
     const container = document.getElementById("stream-container");
+    const framework = window.STREAM_CONFIG.ui_framework || "bootstrap5";
+    console.log(framework)
+    let UI;
+
+    if (framework === "tailwind") {
+        UI = window.StreamUI_Tailwind;
+    } else {
+        UI = window.StreamUI_Bootstrap;
+    }
 
     const CONFIG = window.STREAM_CONFIG;
 
@@ -14,32 +23,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function createServerBlock(server) {
-        const block = document.createElement("div");
-        block.className = "card mb-4";
 
-        block.innerHTML = `
-            <div class="card-body">
-
-                <h5>Server: ${server}</h5>
-
-                <div class="file-counter small text-muted mb-2"></div>
-
-                <div class="file-bars mb-3"></div>
-
-                <div class="progress mb-2">
-                    <div class="progress-bar bg-success total-bar" style="width:0%">0%</div>
-                </div>
-
-                <div class="server-log small text-muted"></div>
-
-            </div>
-        `;
-
-        container.appendChild(block);
+        const block = UI.createServerBlock(container, server);
 
         serversUI[server] = {
             block,
-            bars: [],   // ← vacío al inicio
+            bars: [],
             totalBar: block.querySelector(".total-bar"),
             log: block.querySelector(".server-log"),
             counter: block.querySelector(".file-counter"),
@@ -126,22 +115,10 @@ document.addEventListener("DOMContentLoaded", () => {
                             (CONFIG.bulk ? CONFIG.max_simultaneous : 1);
 
             for (let i = 0; i < barCount; i++) {
-                const wrapper = document.createElement("div");
-                wrapper.innerHTML = `
-                    <div class="small file-name"></div>
-                    <div class="progress mb-2">
-                        <div class="progress-bar bg-primary" style="width:0%">0%</div>
-                    </div>
-                `;
-                barsContainer.appendChild(wrapper);
 
-                serverUI.bars.push({
-                    wrapper,
-                    name: wrapper.querySelector(".file-name"),
-                    bar: wrapper.querySelector(".progress-bar"),
-                    file: null,
-                    size: 0
-                });
+                const slot = UI.createFileBar(barsContainer)
+
+                serverUI.bars.push(slot)
             }
         });
 
@@ -182,18 +159,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (!slot) return;
 
-            slot.bar.style.width = data.percent + "%";
-            slot.bar.innerText = data.percent + "%";
+            UI.updateFileBar(slot, data.percent)
 
             if (slot.size) {
 
                 const downloaded = slot.size * data.percent / 100;
 
                 const downloadedMB = (downloaded / 1024 / 1024).toFixed(1);
-                const totalMB = (slot.size / 1024 / 1024).toFixed(1);
+                const totalMB = (slot.size / 1024 / 1024).toFixed(1);                    ;
 
-                slot.name.innerText =
-                    `${data.file} (${t("downloaded")} ${downloadedMB} MB ${t("of")} ${totalMB} MB)`;
+                UI.updateFileLabel(slot, `${data.file} (${t("downloaded")} ${downloadedMB} MB ${t("of")} ${totalMB} MB)`)
             }
         });
 

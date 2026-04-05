@@ -14,4 +14,11 @@ class DefaultConfig:
     STREAM_SERVERS = []
     STREAM_MAX_SERVERS = 2
 
+    # Default lang
     STREAM_LANG = "en"
+
+    # UI framework | bootstrap5 | tailwind | custom
+    STREAM_UI_FRAMEWORK = "tailwind"
+
+    # optional custom template
+    STREAM_UI_TEMPLATE = None

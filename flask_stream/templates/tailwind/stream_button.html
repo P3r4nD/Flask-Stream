@@ -1,0 +1,16 @@
+<button id="stream-btn"
+class="bg-violet-500 hover:bg-violet-400 text-slate-900 font-medium px-4 py-2 rounded-lg transition shadow">
+{{ stream_i18n.download_logs }}
+</button>
+
+<div id="stream-log" class="mt-3 text-sm text-slate-400"></div>
+
+<div id="stream-container" class="mt-6 space-y-6"></div>
+
+<script>
+window.STREAM_CONFIG = {{ stream_config | tojson }};
+window.STREAM_I18N = {{ stream_i18n | tojson }};
+</script>
+
+<script src="{{ url_for('stream.static', filename='ui/tailwind.js') }}"></script>
+<script src="{{ url_for('stream.static', filename='stream.js') }}"></script>
