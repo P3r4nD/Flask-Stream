@@ -33,6 +33,7 @@
 
 5. **Ready-to-use HTML/JavaScript UI**
    - Includable download button via `{{ stream_button() }}`.
+   - Tailwind, Bootstrap 5 or custom emplate
    - Shows logs, errors, and dynamic progress using Server-Sent Events (SSE).
    - Fully compatible with Bootstrap 5 for responsive styling.
 
