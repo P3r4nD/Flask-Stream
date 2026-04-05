@@ -245,12 +245,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Connection error capture
         es.onerror = (e) => {
+
+            console.log("SSE connection lost")
+
             if (es.readyState === EventSource.CLOSED) {
                 addLogMessage(`<span class="text-danger">Server or App disconnected</span>`, es);
             } else {
                 addLogMessage(`<span class="text-warning">Connection interrupted, attempting to reconnect...</span>`, es);
             }
         };
+
+        es.addEventListener("ping", () => {})
     };
 
 });

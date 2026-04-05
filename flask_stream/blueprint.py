@@ -1,6 +1,7 @@
 from flask import Blueprint, Response, current_app, jsonify
 import json
 import threading
+from queue import Empty
 from .jobs import create_job, jobs
 
 bp = Blueprint(
@@ -33,11 +34,24 @@ def start():
 @bp.route("/events/<job_id>")
 def events(job_id):
     def generator():
+
         q = jobs[job_id]["queue"]
+
         while True:
-            item = q.get()
-            yield f"event: {item['event']}\n"
-            yield f"data: {json.dumps(item['data'])}\n\n"
+            try:
+                item = q.get(timeout=1)
+
+                yield f"event: {item['event']}\n"
+                yield f"data: {json.dumps(item['data'])}\n\n"
+
+            except Empty:
+                # keep connection alive
+                yield "event: ping\ndata: {}\n\n"
+
             if jobs[job_id]["done"] and q.empty():
                 break
+
+        # cleanup
+        del jobs[job_id]
+
     return Response(generator(), mimetype="text/event-stream")
