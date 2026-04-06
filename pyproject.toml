@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Flask-Stream"
-version = "1.0.9"
+version = "1.1.0"
 description = "Flask extension for remote downloads and progress streaming"
 readme = "README.md"
 requires-python = ">=3.11"
