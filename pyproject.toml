@@ -3,8 +3,8 @@ requires = ["setuptools>=66", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "flask-stream"
-version = "1.0.8"
+name = "Flask-Stream"
+version = "1.0.9"
 description = "Flask extension for remote downloads and progress streaming"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -12,7 +12,7 @@ license = {file = "LICENSE"}
 authors = [
     {name = "Pera Andreu", email = "perapublica@gmail.com"}
 ]
-urls = { "Homepage" = "https://github.com/P3r4nD/flask-stream" }
+urls = { "Homepage" = "https://github.com/P3r4nD/Flask-Stream" }
 classifiers = [
     "Framework :: Flask",
     "Programming Language :: Python :: 3",

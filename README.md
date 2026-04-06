@@ -1,4 +1,4 @@
-# Flask-Stream
+# Flask-Stream 1.0.9
 
 [![PyPI](https://img.shields.io/pypi/v/flask-stream?cache_bust=1&cacheSeconds=20)](https://pypi.org/project/flask-stream/)
 [![Python Version](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
