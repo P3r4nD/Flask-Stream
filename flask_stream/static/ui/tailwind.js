@@ -20,6 +20,7 @@ window.StreamUI_Tailwind = {
             </div>
 
             <div class="server-log text-sm text-gray-500"></div>
+            <div class="provider-log small text-info"></div>
         `;
 
         container.appendChild(block);

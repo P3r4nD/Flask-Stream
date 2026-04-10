@@ -19,6 +19,7 @@ window.StreamUI_Bootstrap = {
                 </div>
 
                 <div class="server-log small text-muted"></div>
+                <div class="provider-log small text-info"></div>
 
             </div>
         `;

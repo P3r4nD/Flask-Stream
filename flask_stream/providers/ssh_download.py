@@ -23,6 +23,14 @@ class SSHDownloadProvider:
 
         return client
 
+    def _get_business_providers(self, app):
+        """
+        Return business providers only if enabled.
+        """
+        if not app.config.get("STREAM_BUSINESS_ENABLED", False):
+            return []
+        return app.config.get("STREAM_BUSINESS_PROVIDERS", [])
+
     def is_dir(self, entry):
         """Check if an SFTP entry is a directory."""
         return stat.S_ISDIR(entry.st_mode)
@@ -72,10 +80,16 @@ class SSHDownloadProvider:
             statinfo = sftp.stat(remote_path)
             size = statinfo.st_size
 
+            # Notify provider of file start
+            for p in self._get_business_providers(app):
+                if hasattr(p, "on_file"):
+                    p.on_file(app, job_id, server, rel, remote_path, local_path, size)
+
             push_event(job_id, "File", {
+                "server": server["id"],
+                "name": server["name"],
                 "file": rel,
-                "size": size,
-                "server": server["name"]
+                "size": size
             })
 
             os.makedirs(os.path.dirname(local_path), exist_ok=True)
@@ -98,15 +112,25 @@ class SSHDownloadProvider:
 
                     percent = int(downloaded / size * 100)
 
+                    # Notify provider of progress
+                    for p in self._get_business_providers(app):
+                        if hasattr(p, "on_progress"):
+                            p.on_progress(app, job_id, server, rel, local_path, percent)
+
                     push_event(job_id, "Progress", {
                         "percent": percent,
                         "file": rel,
-                        "server": server["name"]
+                        "server": server["id"]
                     })
+
+            # Notify provider of file end
+            for p in self._get_business_providers(app):
+                if hasattr(p, "on_file_done"):
+                    p.on_file_done(app, job_id, server, rel, local_path)
 
             push_event(job_id, "FileDone", {
                 "file": rel,
-                "server": server["name"]
+                "server": server["id"]
             })
 
         finally:
@@ -125,7 +149,8 @@ class SSHDownloadProvider:
 
         push_event(job_id, "debug", {
             "msg": f"Connecting {server['name']}",
-            "server": server["name"]
+            "server": server["id"],
+            "name": server["name"]
         })
 
         base = server["remote_base"]
@@ -141,14 +166,21 @@ class SSHDownloadProvider:
 
         total_files = len(files)
 
+        # Notify the provider of the batch
+        for p in self._get_business_providers(app):
+            if hasattr(p, "on_batch"):
+                p.on_batch(app, job_id, server, files, base, download_dir)
+
         push_event(job_id, "Batch", {
-            "server": server["name"],
+            "server": server["id"],
+            "name": server["name"],
             "total": total_files
         })
 
         push_event(job_id, "debug", {
             "msg": f"{total_files} files found",
-            "server": server["name"]
+            "server": server["id"],
+            "name": server["name"]
         })
 
         # Download files
@@ -231,7 +263,11 @@ class SSHDownloadProvider:
 
                 self.run_server(app, job_id, server)
 
-        # Signal completion
+        # Notify provider of global termination
+        for p in app.config.get("STREAM_BUSINESS_PROVIDERS", []):
+            if hasattr(p, "on_done"):
+                p.on_done(app, job_id, servers)
 
+        # Signal completion
         push_event(job_id, "done", {})
         finish_job(job_id)

@@ -45,13 +45,18 @@ def events(job_id):
                 yield f"data: {json.dumps(item['data'])}\n\n"
 
             except Empty:
+                if jobs[job_id]["done"]:
+                    break
                 # keep connection alive
                 yield "event: ping\ndata: {}\n\n"
 
             if jobs[job_id]["done"] and q.empty():
+                yield "event: close\ndata: {}\n\n"
                 break
 
-        # cleanup
+        # cleanup job
         del jobs[job_id]
+
+        return
 
     return Response(generator(), mimetype="text/event-stream")

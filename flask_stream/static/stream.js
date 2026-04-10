@@ -1,9 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-    const btn = document.getElementById("stream-btn");
-    const container = document.getElementById("stream-container");
     const framework = window.STREAM_CONFIG.ui_framework || "bootstrap5";
-    console.log(framework)
+
     let UI;
 
     if (framework === "tailwind") {
@@ -13,34 +11,32 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const CONFIG = window.STREAM_CONFIG;
-
-    const i18n = window.STREAM_I18N || {}
+    const i18n = window.STREAM_I18N || {};
 
     const serversUI = {};
 
     function t(key) {
-        return i18n[key] || key
+        return i18n[key] || key;
     }
 
-    function createServerBlock(server) {
+    function createServerBlock(serverId, serverName, container) {
 
-        const block = UI.createServerBlock(container, server);
+        const block = UI.createServerBlock(container, serverName);
 
-        serversUI[server] = {
+        serversUI[serverId] = {
             block,
             bars: [],
             totalBar: block.querySelector(".total-bar"),
             log: block.querySelector(".server-log"),
+            providerLog: block.querySelector(".provider-log"),
             counter: block.querySelector(".file-counter"),
             totalFiles: 0,
             completedFiles: 0
         };
     }
 
-
     function assignBar(serverUI, file) {
 
-        // looking for an open bar
         for (let slot of serverUI.bars) {
             if (!slot.file) {
                 slot.file = file;
@@ -48,7 +44,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // If sequential always uses the first
         if (!CONFIG.bulk) {
             const slot = serverUI.bars[0];
             slot.file = file;
@@ -59,7 +54,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function findBar(serverUI, file) {
-
         return serverUI.bars.find(b => b.file === file);
     }
 
@@ -70,173 +64,246 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function addLogMessage(html, es) {
+
         const log = document.getElementById("stream-log");
 
+        if (!log) return;
+
         if (log.children.length >= CONFIG.max_reconnect) {
+
             log.replaceChildren();
+
             pushLog(log, `<span class="text-danger">${t("server_disconnected")}</span>`);
+
             log.scrollTop = log.scrollHeight;
+
             es?.close?.();
+
             return;
         }
 
         pushLog(log, html);
+
         log.scrollTop = log.scrollHeight;
     }
 
+    function initStream(btn) {
 
+        btn.onclick = async () => {
 
-    btn.onclick = async () => {
+            const endpoint = btn.dataset.streamEndpoint || "/stream/start";
+            const containerId = btn.dataset.streamContainer || "stream-container";
 
-        container.innerHTML = "";
-        Object.keys(serversUI).forEach(k => delete serversUI[k]);
+            const container = document.getElementById(containerId);
 
-        const r = await fetch("/stream/start", { method: "POST" });
-        const j = await r.json();
+            if (!container) return;
 
-        const es = new EventSource(`/stream/events/${j.job_id}`);
+            container.innerHTML = "";
 
-        const log = document.getElementById("stream-log");
+            Object.keys(serversUI).forEach(k => delete serversUI[k]);
 
-        es.addEventListener("Batch", e => {
-            const data = JSON.parse(e.data);
-            const server = data.server;
+            const r = await fetch(endpoint, { method: "POST" });
+            const j = await r.json();
 
-            if (!serversUI[server]) createServerBlock(server);
+            const es = new EventSource(`/stream/events/${j.job_id}`);
 
-            const serverUI = serversUI[server];
-            serverUI.totalFiles = data.total;
+            es.addEventListener("Batch", e => {
 
-            if (serverUI.bars.length > 0) return;
+                const data = JSON.parse(e.data);
 
-            const barsContainer = serverUI.block.querySelector(".file-bars");
+                const serverId = data.server;
+                const serverName = data.name || `Server ${serverId}`;
 
-            const barCount = (data.total === 1) ? 1 :
-                            (CONFIG.bulk ? CONFIG.max_simultaneous : 1);
+                if (!serversUI[serverId]) {
+                    createServerBlock(serverId, serverName, container);
+                }
 
-            for (let i = 0; i < barCount; i++) {
+                const serverUI = serversUI[serverId];
 
-                const slot = UI.createFileBar(barsContainer)
+                serverUI.totalFiles = data.total;
 
-                serverUI.bars.push(slot)
-            }
-        });
+                if (serverUI.bars.length > 0) return;
 
-        es.addEventListener("File", e => {
+                const barsContainer = serverUI.block.querySelector(".file-bars");
 
-            const data = JSON.parse(e.data);
-            const server = data.server;
+                const barCount =
+                    (data.total === 1)
+                        ? 1
+                        : (CONFIG.bulk ? CONFIG.max_simultaneous : 1);
 
-            if (!serversUI[server]) createServerBlock(server);
+                for (let i = 0; i < barCount; i++) {
 
-            const serverUI = serversUI[server];
+                    const slot = UI.createFileBar(barsContainer);
 
-            const slot = assignBar(serverUI, data.file);
-
-            if (!slot) return;
-
-            slot.file = data.file;
-            slot.size = data.size;
-
-            const totalMB = (data.size / 1024 / 1024).toFixed(1);
-
-            slot.name.innerText = `${data.file} (${t("downloaded")} 0 MB ${t("of")} ${totalMB} MB)`;
-
-            slot.bar.style.width = "0%";
-            slot.bar.innerText = "0%";
-
-        });
-
-        es.addEventListener("Progress", e => {
-
-            const data = JSON.parse(e.data);
-
-            const serverUI = serversUI[data.server];
-
-            if (!serverUI) return;
-
-            const slot = findBar(serverUI, data.file);
-
-            if (!slot) return;
-
-            UI.updateFileBar(slot, data.percent)
-
-            if (slot.size) {
-
-                const downloaded = slot.size * data.percent / 100;
-
-                const downloadedMB = (downloaded / 1024 / 1024).toFixed(1);
-                const totalMB = (slot.size / 1024 / 1024).toFixed(1);                    ;
-
-                UI.updateFileLabel(slot, `${data.file} (${t("downloaded")} ${downloadedMB} MB ${t("of")} ${totalMB} MB)`)
-            }
-        });
-
-        es.addEventListener("FileDone", e => {
-
-            const data = JSON.parse(e.data);
-            const serverUI = serversUI[data.server];
-
-            if (!serverUI) return;
-
-            const slot = findBar(serverUI, data.file);
-
-            if (slot) slot.file = null;
-
-            serverUI.completedFiles++;
-
-            const percent = Math.floor(
-                serverUI.completedFiles / serverUI.totalFiles * 100
-            );
-
-            serverUI.totalBar.style.width = percent + "%";
-            serverUI.totalBar.innerText = percent + "%";
-
-            serverUI.counter.innerText =
-                `File ${serverUI.completedFiles} / ${serverUI.totalFiles}`;
-
-        });
-
-        es.addEventListener("debug", e => {
-
-            const data = JSON.parse(e.data);
-            const server = data.server;
-
-            if (!serversUI[server]) createServerBlock(server);
-
-            const log = serversUI[server].log;
-
-            log.innerHTML += `<div>${data.msg}</div>`;
-            log.scrollTop = log.scrollHeight;
-
-        });
-
-        es.addEventListener("done", () => {
-
-            Object.values(serversUI).forEach(serverUI => {
-
-                serverUI.totalBar.style.width = "100%";
-                serverUI.totalBar.innerText = "100%";
+                    serverUI.bars.push(slot);
+                }
 
             });
 
-            es.close();
+            es.addEventListener("File", e => {
 
-        });
+                const data = JSON.parse(e.data);
 
-        // Connection error capture
-        es.onerror = (e) => {
+                let serverUI = serversUI[data.server];
 
-            console.log("SSE connection lost")
+                // Si aún no existe el bloque del servidor, crearlo
+                if (!serverUI) {
 
-            if (es.readyState === EventSource.CLOSED) {
-                addLogMessage(`<span class="text-danger">${t("server_disconnected")}</span>`, es);
-            } else {
-                addLogMessage(`<span class="text-warning">${t("conn_interrupted")}</span>`, es);
-            }
+                    createServerBlock(data.server);
+                    serverUI = serversUI[data.server];
+                }
+
+                // Si Batch aún no creó barras, crearlas aquí
+                if (serverUI.bars.length === 0) {
+
+                    const barsContainer = serverUI.block.querySelector(".file-bars");
+
+                    const barCount = CONFIG.bulk
+                        ? CONFIG.max_simultaneous
+                        : 1;
+
+                    for (let i = 0; i < barCount; i++) {
+
+                        const slot = UI.createFileBar(barsContainer);
+                        serverUI.bars.push(slot);
+                    }
+                }
+
+                const slot = assignBar(serverUI, data.file);
+
+                if (!slot) return;
+
+                slot.file = data.file;
+                slot.size = data.size;
+
+                const totalMB = (data.size / 1024 / 1024).toFixed(1);
+
+                slot.name.innerText =
+                    `${data.file} (${t("downloaded")} 0 MB ${t("of")} ${totalMB} MB)`;
+
+                slot.bar.style.width = "0%";
+                slot.bar.innerText = "0%";
+
+            });
+
+            es.addEventListener("Progress", e => {
+
+                const data = JSON.parse(e.data);
+
+                const serverUI = serversUI[data.server];
+
+                if (!serverUI) return;
+
+                const slot = findBar(serverUI, data.file);
+
+                if (!slot) return;
+
+                UI.updateFileBar(slot, data.percent);
+
+                if (slot.size) {
+
+                    const downloaded = slot.size * data.percent / 100;
+
+                    const downloadedMB = (downloaded / 1024 / 1024).toFixed(1);
+                    const totalMB = (slot.size / 1024 / 1024).toFixed(1);
+
+                    UI.updateFileLabel(
+                        slot,
+                        `${data.file} (${t("downloaded")} ${downloadedMB} MB ${t("of")} ${totalMB} MB)`
+                    );
+                }
+
+            });
+
+            es.addEventListener("FileDone", e => {
+
+                const data = JSON.parse(e.data);
+
+                const serverUI = serversUI[data.server];
+
+                if (!serverUI) return;
+
+                const slot = findBar(serverUI, data.file);
+
+                if (slot) slot.file = null;
+
+                serverUI.completedFiles++;
+
+                const percent = Math.floor(
+                    serverUI.completedFiles / serverUI.totalFiles * 100
+                );
+
+                serverUI.totalBar.style.width = percent + "%";
+                serverUI.totalBar.innerText = percent + "%";
+
+                serverUI.counter.innerText =
+                    `File ${serverUI.completedFiles} / ${serverUI.totalFiles}`;
+            });
+
+            es.addEventListener("debug", e => {
+
+                const data = JSON.parse(e.data);
+
+                const serverUI = serversUI[data.server];
+
+                if (!serverUI) return;
+
+                const log = serverUI.log;
+
+                log.innerHTML += `<div>${data.msg}</div>`;
+
+                log.scrollTop = log.scrollHeight;
+            });
+
+            es.addEventListener("done", () => {
+
+                Object.values(serversUI).forEach(serverUI => {
+
+                    serverUI.totalBar.style.width = "100%";
+                    serverUI.totalBar.innerText = "100%";
+
+                });
+
+                es.close();
+
+            });
+
+            es.addEventListener("ProviderEvent", e => {
+                const data = JSON.parse(e.data);
+                const serverUI = serversUI[data.server];
+                if (!serverUI || !serverUI.providerLog) return;
+                serverUI.providerLog.innerHTML += `<div>${data.msg}</div>`;
+                serverUI.providerLog.scrollTop = serverUI.providerLog.scrollHeight;
+            });
+
+            es.onerror = (e) => {
+
+                console.log("SSE connection lost");
+                console.log("readyState:", es.readyState);
+
+                if (es.readyState === EventSource.CLOSED) {
+
+                    addLogMessage(
+                        `<span class="text-danger">${t("server_disconnected")}</span>`,
+                        es
+                    );
+
+                } else {
+
+                    addLogMessage(
+                        `<span class="text-warning">${t("conn_interrupted")}</span>`,
+                        es
+                    );
+
+                }
+
+            };
+
+            es.addEventListener("ping", () => {});
+
         };
+    }
 
-        es.addEventListener("ping", () => {})
-    };
+    document.querySelectorAll("[data-stream-start]").forEach(initStream);
 
 });
