@@ -2,6 +2,7 @@
 
 import os
 import stat
+import time
 import queue
 import paramiko
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -102,6 +103,7 @@ class SSHDownloadProvider(BaseProvider):
             size = statinfo.st_size
 
             if os.path.exists(local_path):
+
                 local_size = os.path.getsize(local_path)
 
                 if local_size == size:
@@ -131,7 +133,6 @@ class SSHDownloadProvider(BaseProvider):
                         "file": rel,
                         "server": server["id"]
                     })
-
                     # Provider: on_file_done
                     provider_queue.put((
                         "on_file_done",
@@ -294,23 +295,21 @@ class SSHDownloadProvider(BaseProvider):
                         )
                     )
 
-                done_count = 0
-                import time
-
-                while done_count < len(futures) or not provider_queue.empty():
-
-                    # 1. Always drain queue
-                    while not provider_queue.empty():
+                while True:
+                    # Drain queue (multiple events per iteration to prevent accumulation)
+                    for _ in range(100):
+                        if provider_queue.empty():
+                            break
                         event_name, payload = provider_queue.get()
                         self._dispatch_provider_event(app, job_id, event_name, payload)
 
-                    # 2. Review futures
-                    for f in list(futures):
-                        if f.done():
-                            futures.remove(f)
-                            done_count += 1
+                    # If any workers remain alive
+                    any_running = any(not f.done() for f in futures)
 
-                    # 3. Avoid busy-waiting and allow the queue to fill up
+                    # Exit condition: no one alive + empty queue
+                    if not any_running and provider_queue.empty():
+                        break
+
                     time.sleep(0.01)
         else:
             # Sequential, but also using the tail to unify the model
@@ -330,7 +329,8 @@ class SSHDownloadProvider(BaseProvider):
 
         # Provider: on_done (per server, in run_server thread)
         self._dispatch_provider_event(app, job_id, "on_done", {
-            "servers": [server]
+            "servers": [server],
+            "scope": "server"
         })
 
     # -------------------------
@@ -361,7 +361,7 @@ class SSHDownloadProvider(BaseProvider):
         # Provider: on_done global
         for p in self._get_business_providers(app):
             if hasattr(p, "on_done"):
-                p.on_done(app, job_id, servers)
+                p.on_done(app, job_id, servers, scope="global")
 
         # SSE: done
         push_event(job_id, "done", {})

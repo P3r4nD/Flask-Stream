@@ -58,7 +58,7 @@ class CustomSyncProvider(BaseProvider):
         server_id = server["id"]
         self._log(job_id, server_id, f"[{self.prefix}] on_file_done: {rel}", "on_file_done")
 
-    def on_done(self, app, job_id, servers):
+    def on_done(self, app, job_id, servers, scope="server"):
         for server in servers:
             server_id = server["id"]
-            self._log(job_id, server_id, f"[{self.prefix}] on_done: all servers complete", "on_done")
+            self._log(job_id, server_id, f"[{self.prefix}] on_done: ({scope}) all servers complete", "on_done")

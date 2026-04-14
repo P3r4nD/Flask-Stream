@@ -26,6 +26,6 @@ class BaseProvider:
         """Called after a file is downloaded."""
         pass
 
-    def on_done(self, app, job_id, servers):
+    def on_done(self, app, job_id, servers, scope):
         """Called after all servers are processed."""
         pass
