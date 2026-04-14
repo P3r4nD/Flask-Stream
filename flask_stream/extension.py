@@ -93,7 +93,7 @@ class Stream:
         from flask import url_for
         from markupsafe import Markup
 
-        # Use config/i18n past or the global context
+        # Usamos config/i18n pasado o el del contexto global
         cfg = config or getattr(current_app, "stream_config", {
             "ui_framework": current_app.config.get("STREAM_UI_FRAMEWORK"),
             "bulk": current_app.config.get("STREAM_BULK_DOWNLOAD"),
