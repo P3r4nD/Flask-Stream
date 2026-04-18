@@ -1,10 +1,10 @@
 # Flask-Stream change log
 
-## Release 2.1.1 - 2026-04-14
+## Release 1.2.1 - 2026-04-14
 - SSHDownloadProvider must extend BaseProvider to be able to correctly propagate all events. Fixes [#1](https://github.com/P3r4nD/Flask-Stream/issues/1)
 - Differentiate the scop in the on_done event
 - 
-## Release 2.1 - 2026-04-10
+## Release 1.1 - 2026-04-10
 
 ### New: CustomSyncProvider
 
