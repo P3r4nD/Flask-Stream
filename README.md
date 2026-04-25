@@ -8,7 +8,7 @@
 **Flask-Stream** is a Flask 3 extension that enables real-time streaming of file downloads from one or multiple remote servers directly in your web application's UI. It is designed to be easy to integrate, flexible, and extensible for future types of streams.
 
 ---
-
+![Flask-Stream in Tailwind](flask_stream/static/flask-stream-screen.png "Flask-Stream in Tailwind")
 ## Features
 
 1. **SSH File Downloads**
